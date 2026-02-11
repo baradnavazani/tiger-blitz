@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tiger Blitz v3 - Firebase Edition</title>
+    <title>Tiger Blitz - Fixed Version</title>
     <script src="https://webappcontent.telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --primary: #ff9800; --bg: #0a0a0a; --card: #151515; }
@@ -20,7 +20,6 @@
         .tiger-coin img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         .card { width: 100%; background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; box-sizing: border-box; }
         .btn { background: var(--primary); color: black; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn:disabled { background: #333; color: #666; }
     </style>
 </head>
 <body>
@@ -39,34 +38,9 @@
         </div>
     </div>
 
-    <div id="boost-page" class="page">
-        <h2 style="color:var(--primary)">Boost & Tasks</h2>
-        <div class="card">
-            <div><b>Multitap (2X)</b><br><small id="m-timer">2x coins per tap</small></div>
-            <button class="btn" id="m-btn" onclick="activateMulti()">Activate</button>
-        </div>
-        <hr style="width:100%; border:0; border-top:1px solid #333; margin:10px 0;">
-        <div class="card">
-            <div><b>Invite 5 Friends</b><br><small id="task1-count">0 / 5</small></div>
-            <button class="btn" id="task1-btn" onclick="claimTask(1, 5, 5000)" disabled>Claim 5K</button>
-        </div>
-    </div>
-
-    <div id="ref-page" class="page">
-        <h2>Invite Friends</h2>
-        <div class="card" style="background:rgba(255,152,0,0.1); border-color:var(--primary);">
-            <div style="text-align:left;"><b>Bonus!</b><br><small>Get +2,000 coins per referral!</small></div>
-        </div>
-        <div id="ref-link-display" style="background:#000; padding:10px; width:100%; border-radius:8px; font-size:11px; color:var(--primary); margin:10px 0;">Loading link...</div>
-        <button class="btn" style="width:100%" onclick="copyRef()">Copy Link</button>
-        <p>Total Referrals: <span id="total-refs">0</span></p>
-    </div>
-
-    <div id="wallet-page" class="page">
-        <div style="font-size:60px; margin-top:40px;">💎</div>
-        <h2>Wallet</h2>
-        <button class="btn" id="connect-btn" onclick="connectWallet()">Connect Wallet</button>
-    </div>
+    <div id="boost-page" class="page"><h2>Boost & Tasks</h2></div>
+    <div id="ref-page" class="page"><h2>Invite</h2><div id="ref-link-display">Loading...</div></div>
+    <div id="wallet-page" class="page"><h2>Wallet</h2></div>
 
     <nav>
         <div class="nav-item active" onclick="nav('game-page', this)"><b>🎮</b>Game</div>
@@ -79,15 +53,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // !!! مقادیر زیر رو با کدی که از فایربیس کپی کردی عوض کن !!!
         const firebaseConfig = {
-            apiKey: "AIzaSyAxCBS4uVJ_61fM_LBjIGlWY8MEZ0Itp4A",
+            apiKey: "AIzaSyAxCBS4uVJ_61fM_LBjiG1WY8MEZ0itp4A", // اگر این ناقص است، کاملش را از فایربیس بگذار
             authDomain: "tiger-blitz.firebaseapp.com",
             databaseURL: "https://tiger-blitz-default-rtdb.firebaseio.com", 
             projectId: "tiger-blitz",
             storageBucket: "tiger-blitz.appspot.com",
-            messagingSenderId: "...",
-            appId: "..."
+            messagingSenderId: "955326126487",
+            appId: "1:955326126487:web:8064f7b19e5523b1f4ccd2"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -98,17 +71,12 @@
         const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "guest_user";
         const userRef = ref(db, 'users/' + userId);
 
-        let userData = { coins: 0, energy: 1000, referrals: 0, claimed: [] };
-        let power = 1;
+        let userData = { coins: 0, energy: 1000, referrals: 0 };
 
-        // لینک رفرال
-        document.getElementById('ref-link-display').innerText = https://t.me/your_bot_name?start=${userId};
-
-        // دریافت اطلاعات زنده
         onValue(userRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                userData = { ...userData, ...data };
+                userData = data;
                 updateUI();
             } else {
                 set(userRef, userData);
@@ -116,69 +84,32 @@
         });
 
         window.handleTap = function() {
-            if (userData.energy >= power) {
+            if (userData.energy > 0) {
                 runTransaction(userRef, (dbData) => {
                     if (dbData) {
-                        dbData.coins += power;
-                        dbData.energy -= power;
+                        dbData.coins++;
+                        dbData.energy--;
                     }
                     return dbData;
                 });
                 tg.HapticFeedback.impactOccurred('medium');
             }
-        }
-
-        window.claimTask = function(id, goal, reward) {
-            if (userData.referrals >= goal && !userData.claimed?.includes(id)) {
-                runTransaction(userRef, (dbData) => {
-                    if (dbData) {
-                        dbData.coins += reward;
-                        if (!dbData.claimed) dbData.claimed = [];
-                        dbData.claimed.push(id);
-                    }
-                    return dbData;
-                });
-                tg.showAlert("Reward Claimed!");
-            }
-        }
-
-        function updateUI() {
-            document.getElementById('score-val').innerText = (userData.coins || 0).toLocaleString();
-            document.getElementById('energy-stat').innerText = (userData.energy || 0) + "/1000";
-            document.getElementById('fill').style.width = (userData.energy / 10) + "%";
-            document.getElementById('total-refs').innerText = userData.referrals || 0;
-            document.getElementById('task1-count').innerText = ${userData.referrals || 0} / 5;
-            
-            const t1Btn = document.getElementById('task1-btn');
-            if (userData.claimed?.includes(1)) {
-                t1Btn.innerText = "Claimed"; t1Btn.disabled = true;
-            } else if (userData.referrals >= 5) {
-                t1Btn.disabled = false;
-            }
-        }
+        };
 
         window.nav = function(pageId, el) {
             document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(pageId).style.display = 'flex';
             el.classList.add('active');
+        };
+
+        function updateUI() {
+            document.getElementById('score-val').innerText = (userData.coins || 0).toLocaleString();
+            document.getElementById('energy-stat').innerText = (userData.energy || 0) + "/1000";
+            document.getElementById('fill').style.width = (userData.energy / 10) + "%";
+            document.getElementById('ref-link-display').innerText = "https://t.me/your_bot?start=" + userId;
         }
 
-        window.copyRef = function() {
-            navigator.clipboard.writeText(https://t.me/your_bot_name?start=${userId});
-            tg.showAlert("Link Copied!");
-        }
-
-        window.connectWallet = function() {
-            tg.showConfirm("Connect Tonkeeper?", (res) => {
-                if(res) {
-                    document.getElementById('connect-btn').innerText = "Connected: UQ...xY4";
-                    document.getElementById('connect-btn').disabled = true;
-                }
-            });
-        }
-
-        // ریکاوری انرژی
         setInterval(() => {
             if (userData.energy < 1000) {
                 runTransaction(userRef, (dbData) => {
@@ -186,7 +117,7 @@
                     return dbData;
                 });
             }
-        }, 1500);
+        }, 2000);
     </script>
 </body>
 </html>
