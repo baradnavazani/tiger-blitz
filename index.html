@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[17:13, 11/02/2026] Barad: <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -113,6 +113,144 @@
 
         setInterval(() => { if (energy < 1000) { energy++; update(); } }, 1500);
         window.onload = update;
+    </script>
+</body>
+</html>
+[17:19, 11/02/2026] Barad: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tiger Blitz Pro</title>
+    <script src="https://webappcontent.telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --primary: #ff9800; --bg: #0a0a0a; --card: #151515; }
+        body { margin: 0; background: var(--bg); color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; user-select: none; }
+        
+        /* Navigation */
+        nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: #111; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #222; z-index: 1000; }
+        .nav-item { color: #555; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex: 1; height: 100%; justify-content: center; }
+        .nav-item.active { color: var(--primary); background: rgba(255,152,0,0.05); }
+        .nav-item span { font-size: 22px; margin-bottom: 4px; }
+
+        /* Pages */
+        .page { display: none; height: calc(100vh - 75px); flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; width: 100%; overflow-y: auto; }
+        .page.active { display: flex; }
+
+        /* Game Screen */
+        #score { font-size: 55px; font-weight: 800; color: var(--primary); margin: 10px 0; text-shadow: 0 0 20px rgba(255,152,0,0.2); }
+        .tiger-btn { width: 280px; height: 280px; border-radius: 50%; border: 8px solid #222; overflow: hidden; position: relative; transition: transform 0.05s; box-shadow: 0 0 50px rgba(255,152,0,0.15); margin-top: 20px; }
+        .tiger-btn:active { transform: scale(0.94); }
+        .tiger-btn img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
+        /* Energy */
+        .status-card { width: 90%; background: var(--card); padding: 15px; border-radius: 20px; margin-top: auto; margin-bottom: 10px; border: 1px solid #222; }
+        .bar-container { height: 12px; background: #222; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        #energy-fill { height: 100%; background: linear-gradient(90deg, #ff9800, #ff5722); width: 100%; transition: width 0.1s; }
+
+        /* List Styling */
+        .item-list { width: 100%; background: var(--card); padding: 18px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        .btn-buy { background: var(--primary); color: black; border: none; padding: 8px 16px; border-radius: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="game-page" class="page active">
+        <div style="color:#888; letter-spacing: 1px; font-weight: bold;">TOTAL BALANCE</div>
+        <div id="score">0</div>
+        <div class="tiger-btn" onclick="handleTap(event)">
+            <img src="tiger.png" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
+        </div>
+        <div class="status-card">
+            <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;">
+                <span>⚡ Energy</span>
+                <span id="energy-val">1000 / 1000</span>
+            </div>
+            <div class="bar-container"><div id="energy-fill"></div></div>
+        </div>
+    </div>
+
+    <div id="boost-page" class="page">
+        <h2 style="color:var(--primary)">Boosters</h2>
+        <div class="item-list">
+            <div><b>Multitap</b><br><small style="color:#888">+1 per tap</small></div>
+            <button class="btn-buy">Coming Soon</button>
+        </div>
+        <div class="item-list">
+            <div><b>Energy Limit</b><br><small style="color:#888">+500 capacity</small></div>
+            <button class="btn-buy">Coming Soon</button>
+        </div>
+    </div>
+
+    <div id="leaders-page" class="page">
+        <h2 style="color:var(--primary)">Leaderboard</h2>
+        <div class="item-list"><span>1. Alex Tiger</span><span style="color:var(--primary)">2.5M</span></div>
+        <div class="item-list"><span>2. CryptoKing</span><span style="color:var(--primary)">1.8M</span></div>
+        <div class="item-list"><span>3. You</span><span id="my-rank" style="color:var(--primary)">0</span></div>
+    </div>
+
+    <div id="wallet-page" class="page">
+        <div style="font-size: 80px; margin-top: 50px;">💎</div>
+        <h2>Wallet Connection</h2>
+        <p style="color:#888; text-align:center; padding: 0 20px;">Connect your TON wallet to receive your Tiger Tokens soon.</p>
+        <div class="item-list" style="background:#222; justify-content:center; border:none; margin-top:20px;">
+            <span style="font-weight:bold;">Wallet System Coming Soon...</span>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav-item active" onclick="switchPage('game-page', this)"><span>🎮</span>Game</div>
+        <div class="nav-item" onclick="switchPage('boost-page', this)"><span>🚀</span>Boost</div>
+        <div class="nav-item" onclick="switchPage('leaders-page', this)"><span>🏆</span>Top</div>
+        <div class="nav-item" onclick="switchPage('wallet-page', this)"><span>💎</span>Wallet</div>
+    </nav>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        let coins = parseInt(localStorage.getItem('tiger_coins_val')) || 0;
+        let energy = 1000;
+        let maxEnergy = 1000;
+
+        function updateUI() {
+            document.getElementById('score').innerText = coins.toLocaleString();
+            document.getElementById('my-rank').innerText = coins.toLocaleString();
+            document.getElementById('energy-val').innerText = ${energy} / ${maxEnergy};
+            document.getElementById('energy-fill').style.width = (energy / maxEnergy * 100) + '%';
+        }
+
+        function handleTap(e) {
+            if (energy > 0) {
+                coins++;
+                energy--;
+                localStorage.setItem('tiger_coins_val', coins);
+                updateUI();
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        function switchPage(pageId, element) {
+            // مخفی کردن همه صفحات
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // غیرفعال کردن همه دکمه‌های ناوبری
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // فعال کردن صفحه و دکمه انتخابی
+            document.getElementById(pageId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // ریکاوری انرژی
+        setInterval(() => {
+            if (energy < maxEnergy) {
+                energy++;
+                updateUI();
+            }
+        }, 1500);
+
+        window.onload = updateUI;
     </script>
 </body>
 </html>
