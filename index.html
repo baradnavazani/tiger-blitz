@@ -1,82 +1,74 @@
-[17:13, 11/02/2026] Barad: <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tiger Blitz Pro</title>
+    <title>Tiger Blitz</title>
     <script src="https://webappcontent.telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --primary: #ff9800; --bg: #0a0a0a; --card: #151515; }
-        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        :root { --primary: #ff9800; --bg: #0a0a0a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
         
-        /* Navigation */
-        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #111; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #222; z-index: 100; }
-        .nav-item { color: #555; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.3s; }
-        .nav-item.active { color: var(--primary); transform: translateY(-3px); }
+        /* Navigation - Fixed at bottom */
+        nav { position: fixed; bottom: 0; width: 100%; height: 80px; background: #111; display: flex; border-top: 1px solid #222; z-index: 9999; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: #555; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item b { font-size: 24px; }
 
-        /* Pages */
-        .page { display: none; height: calc(100vh - 70px); flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        /* Content Area */
+        .page { display: none; height: calc(100vh - 80px); width: 100%; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; position: absolute; top: 0; }
         .page.active { display: flex; }
 
-        /* Game Elements */
-        #score { font-size: 50px; font-weight: bold; color: var(--primary); margin: 10px 0; }
-        .tiger-container { width: 280px; height: 280px; margin: 30px 0; position: relative; }
-        .tiger-btn { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
-        .tiger-btn:active { transform: scale(0.92); }
-        .tiger-btn img { width: 100%; height: 100%; object-fit: contain; } /* رفع مشکل کادر اضافه */
+        /* Tiger Button Fix */
+        #score { font-size: 50px; font-weight: bold; color: var(--primary); margin: 20px 0; }
+        .tiger-btn-wrapper { width: 260px; height: 260px; position: relative; z-index: 10; }
+        .tiger-img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+        .click-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; cursor: pointer; z-index: 20; }
 
-        .energy-box { width: 90%; background: var(--card); padding: 15px; border-radius: 15px; margin-top: auto; margin-bottom: 10px; }
-        .bar { height: 12px; background: #222; border-radius: 6px; overflow: hidden; margin-top: 8px; }
-        #fill { height: 100%; background: var(--primary); width: 100%; transition: width 0.2s; }
-
-        /* Lists */
-        .list-item { width: 100%; background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        /* Energy Bar */
+        .energy-box { width: 90%; margin-top: auto; margin-bottom: 20px; background: #151515; padding: 15px; border-radius: 15px; }
+        .bar-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; margin-top: 10px; }
+        #fill { height: 100%; background: var(--primary); width: 100%; border-radius: 5px; transition: width 0.1s; }
+        
+        .list-card { width: 100%; background: #151515; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
-    <div id="game-page" class="page active">
-        <div style="color:#888;">TOTAL BALANCE</div>
+    <div id="game" class="page active">
+        <div style="color:#888;">BALANCE</div>
         <div id="score">0</div>
-        <div class="tiger-container">
-            <div class="tiger-btn" onclick="tap()">
-                <img src="tiger.png" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
-            </div>
+        <div class="tiger-btn-wrapper">
+            <div class="click-area" onclick="handleTap()"></div>
+            <img src="tiger.png" class="tiger-img" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
         </div>
         <div class="energy-box">
-            <div style="display:flex; justify-content:space-between; font-size:13px;">
+            <div style="display:flex; justify-content:space-between; font-size:14px;">
                 <span>⚡ Energy</span>
-                <span id="energy-stat">1000 / 1000</span>
+                <span id="energy-text">1000/1000</span>
             </div>
-            <div class="bar"><div id="fill"></div></div>
+            <div class="bar-bg"><div id="fill"></div></div>
         </div>
     </div>
 
-    <div id="boost-page" class="page">
+    <div id="boost" class="page">
         <h2>Boosters</h2>
-        <div class="list-item"><span>Multi-Tap</span><button onclick="alert('Coming Soon')">Level 1</button></div>
-        <div class="list-item"><span>Energy Limit</span><button onclick="alert('Coming Soon')">Level 1</button></div>
+        <div class="list-card"><span>Multi-Tap</span><button disabled>Soon</button></div>
     </div>
-
-    <div id="leaders-page" class="page">
+    <div id="top" class="page">
         <h2>Leaderboard</h2>
-        <div class="list-item"><span>1. Player One</span><span>1,200,000</span></div>
-        <div class="list-item"><span>2. Tiger King</span><span>850,000</span></div>
-        <div class="list-item"><span>3. You</span><span id="user-rank">0</span></div>
+        <div class="list-card"><span>Player 1</span><span>500K</span></div>
     </div>
-
-    <div id="wallet-page" class="page">
-        <div style="font-size: 60px; margin-top: 40px;">💎</div>
-        <h2>Wallet</h2>
-        <p style="color:#888; text-align:center;">Connect your TON wallet to withdraw your rewards.</p>
-        <div class="list-item" style="justify-content:center; background:#333;">Coming Soon...</div>
+    <div id="wallet" class="page">
+        <h2 style="margin-top:50px;">Connect Wallet</h2>
+        <p style="color:#888">System is under maintenance.</p>
     </div>
 
     <nav>
-        <div class="nav-item active" onclick="showPage('game-page', this)">🎮<span>Game</span></div>
-        <div class="nav-item" onclick="showPage('boost-page', this)">🚀<span>Boost</span></div>
-        <div class="nav-item" onclick="showPage('leaders-page', this)">🏆<span>Top</span></div>
-        <div class="nav-item" onclick="showPage('wallet-page', this)">💎<span>Wallet</span></div>
+        <div class="nav-item active" onclick="go('game', this)"><b>🎮</b>Game</div>
+        <div class="nav-item" onclick="go('boost', this)"><b>🚀</b>Boost</div>
+        <div class="nav-item" onclick="go('top', this)"><b>🏆</b>Top</div>
+        <div class="nav-item" onclick="go('wallet', this)"><b>💎</b>Wallet</div>
     </nav>
 
     <script>
@@ -84,173 +76,38 @@
         tg.ready();
         tg.expand();
 
-        let score = parseInt(localStorage.getItem('t_c')) || 0;
+        let coins = parseInt(localStorage.getItem('tiger_score')) || 0;
         let energy = 1000;
 
         function update() {
-            document.getElementById('score').innerText = score.toLocaleString();
-            document.getElementById('user-rank').innerText = score.toLocaleString();
-            document.getElementById('energy-stat').innerText = ${energy} / 1000;
-            document.getElementById('fill').style.width = (energy / 10) + '%';
-        }
-
-        function tap() {
-            if (energy > 0) {
-                score++;
-                energy--;
-                localStorage.setItem('t_c', score);
-                update();
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        }
-
-        function showPage(id, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
-        }
-
-        setInterval(() => { if (energy < 1000) { energy++; update(); } }, 1500);
-        window.onload = update;
-    </script>
-</body>
-</html>
-[17:19, 11/02/2026] Barad: <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tiger Blitz Pro</title>
-    <script src="https://webappcontent.telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root { --primary: #ff9800; --bg: #0a0a0a; --card: #151515; }
-        body { margin: 0; background: var(--bg); color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; user-select: none; }
-        
-        /* Navigation */
-        nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: #111; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #222; z-index: 1000; }
-        .nav-item { color: #555; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex: 1; height: 100%; justify-content: center; }
-        .nav-item.active { color: var(--primary); background: rgba(255,152,0,0.05); }
-        .nav-item span { font-size: 22px; margin-bottom: 4px; }
-
-        /* Pages */
-        .page { display: none; height: calc(100vh - 75px); flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; width: 100%; overflow-y: auto; }
-        .page.active { display: flex; }
-
-        /* Game Screen */
-        #score { font-size: 55px; font-weight: 800; color: var(--primary); margin: 10px 0; text-shadow: 0 0 20px rgba(255,152,0,0.2); }
-        .tiger-btn { width: 280px; height: 280px; border-radius: 50%; border: 8px solid #222; overflow: hidden; position: relative; transition: transform 0.05s; box-shadow: 0 0 50px rgba(255,152,0,0.15); margin-top: 20px; }
-        .tiger-btn:active { transform: scale(0.94); }
-        .tiger-btn img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-
-        /* Energy */
-        .status-card { width: 90%; background: var(--card); padding: 15px; border-radius: 20px; margin-top: auto; margin-bottom: 10px; border: 1px solid #222; }
-        .bar-container { height: 12px; background: #222; border-radius: 10px; overflow: hidden; margin-top: 10px; }
-        #energy-fill { height: 100%; background: linear-gradient(90deg, #ff9800, #ff5722); width: 100%; transition: width 0.1s; }
-
-        /* List Styling */
-        .item-list { width: 100%; background: var(--card); padding: 18px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
-        .btn-buy { background: var(--primary); color: black; border: none; padding: 8px 16px; border-radius: 10px; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-    <div id="game-page" class="page active">
-        <div style="color:#888; letter-spacing: 1px; font-weight: bold;">TOTAL BALANCE</div>
-        <div id="score">0</div>
-        <div class="tiger-btn" onclick="handleTap(event)">
-            <img src="tiger.png" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
-        </div>
-        <div class="status-card">
-            <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;">
-                <span>⚡ Energy</span>
-                <span id="energy-val">1000 / 1000</span>
-            </div>
-            <div class="bar-container"><div id="energy-fill"></div></div>
-        </div>
-    </div>
-
-    <div id="boost-page" class="page">
-        <h2 style="color:var(--primary)">Boosters</h2>
-        <div class="item-list">
-            <div><b>Multitap</b><br><small style="color:#888">+1 per tap</small></div>
-            <button class="btn-buy">Coming Soon</button>
-        </div>
-        <div class="item-list">
-            <div><b>Energy Limit</b><br><small style="color:#888">+500 capacity</small></div>
-            <button class="btn-buy">Coming Soon</button>
-        </div>
-    </div>
-
-    <div id="leaders-page" class="page">
-        <h2 style="color:var(--primary)">Leaderboard</h2>
-        <div class="item-list"><span>1. Alex Tiger</span><span style="color:var(--primary)">2.5M</span></div>
-        <div class="item-list"><span>2. CryptoKing</span><span style="color:var(--primary)">1.8M</span></div>
-        <div class="item-list"><span>3. You</span><span id="my-rank" style="color:var(--primary)">0</span></div>
-    </div>
-
-    <div id="wallet-page" class="page">
-        <div style="font-size: 80px; margin-top: 50px;">💎</div>
-        <h2>Wallet Connection</h2>
-        <p style="color:#888; text-align:center; padding: 0 20px;">Connect your TON wallet to receive your Tiger Tokens soon.</p>
-        <div class="item-list" style="background:#222; justify-content:center; border:none; margin-top:20px;">
-            <span style="font-weight:bold;">Wallet System Coming Soon...</span>
-        </div>
-    </div>
-
-    <nav>
-        <div class="nav-item active" onclick="switchPage('game-page', this)"><span>🎮</span>Game</div>
-        <div class="nav-item" onclick="switchPage('boost-page', this)"><span>🚀</span>Boost</div>
-        <div class="nav-item" onclick="switchPage('leaders-page', this)"><span>🏆</span>Top</div>
-        <div class="nav-item" onclick="switchPage('wallet-page', this)"><span>💎</span>Wallet</div>
-    </nav>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-
-        let coins = parseInt(localStorage.getItem('tiger_coins_val')) || 0;
-        let energy = 1000;
-        let maxEnergy = 1000;
-
-        function updateUI() {
             document.getElementById('score').innerText = coins.toLocaleString();
-            document.getElementById('my-rank').innerText = coins.toLocaleString();
-            document.getElementById('energy-val').innerText = ${energy} / ${maxEnergy};
-            document.getElementById('energy-fill').style.width = (energy / maxEnergy * 100) + '%';
+            document.getElementById('energy-text').innerText = energy + "/1000";
+            document.getElementById('fill').style.width = (energy / 10) + "%";
         }
 
-        function handleTap(e) {
+        function handleTap() {
             if (energy > 0) {
                 coins++;
                 energy--;
-                localStorage.setItem('tiger_coins_val', coins);
-                updateUI();
+                update();
+                localStorage.setItem('tiger_score', coins);
                 tg.HapticFeedback.impactOccurred('light');
             }
         }
 
-        function switchPage(pageId, element) {
-            // مخفی کردن همه صفحات
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            // غیرفعال کردن همه دکمه‌های ناوبری
+        function go(pageId, el) {
+            // مخفی کردن تمام صفحات
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            // برداشتن حالت اکتیو از تمام دکمه‌ها
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            // فعال کردن صفحه و دکمه انتخابی
-            document.getElementById(pageId).classList.add('active');
-            element.classList.add('active');
+            // نشان دادن صفحه مورد نظر
+            document.getElementById(pageId).style.display = 'flex';
+            el.classList.add('active');
         }
 
-        // ریکاوری انرژی
-        setInterval(() => {
-            if (energy < maxEnergy) {
-                energy++;
-                updateUI();
-            }
-        }, 1500);
-
-        window.onload = updateUI;
+        setInterval(() => { if(energy < 1000) { energy++; update(); } }, 1500);
+        window.onload = update;
     </script>
 </body>
 </html>
