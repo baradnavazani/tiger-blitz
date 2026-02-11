@@ -1,4 +1,158 @@
-همسر نساء خانم خواهر میرزا حسین علی نوری (بهاء الله)
-در زرگنده در عمارتی نزدیک به سفارت روسی می زیسته
-او منشی و مترجم و از کارکنان سفارت روس در تهران بود
-در زمان ترور ناصرالدین شاه مدتی حضرت بهاء الله در آنها پناه گرفتند
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tiger Blitz 🐅</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background: radial-gradient(circle, #1a1a1a, #000);
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            height: 100vh;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #score-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        #score {
+            font-size: 55px;
+            font-weight: bold;
+            color: #ff9f43;
+            text-shadow: 0 0 25px rgba(255, 159, 67, 0.6);
+        }
+
+        .tiger-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* دایره کلیک خور اصلی */
+        #tiger-btn {
+            width: 250px;
+            height: 250px;
+            background: url('https://img.icons8.com/plasticine/400/tiger.png') no-repeat center;
+            background-size: contain;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.05s;
+            filter: drop-shadow(0 0 20px rgba(255, 159, 67, 0.3));
+            z-index: 2;
+        }
+
+        #tiger-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* نوار انرژی پایین صفحه */
+        .footer-info {
+            width: 80%;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .energy-bar {
+            width: 100%;
+            height: 14px;
+            background: #222;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 1px solid #444;
+            overflow: hidden;
+        }
+
+        #energy-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff9f43, #ffcc33);
+            box-shadow: 0 0 10px #ff9f43;
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="score-container">
+        <div>موجودی ببر 💰</div>
+        <div id="score">0</div>
+    </div>
+
+    <div class="tiger-container">
+        <div id="tiger-btn"></div>
+    </div>
+
+    <div class="footer-info">
+        <div>⚡ انرژی: <span id="energy-text">1000</span> / 1000</div>
+        <div class="energy-bar">
+            <div id="energy-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // تمام صفحه کردن مینی‌آپ
+
+        // رنگ‌بندی نوار ابزار تلگرام
+        tg.setHeaderColor('#1a1a1a');
+        tg.setBackgroundColor('#1a1a1a');
+
+        let score = parseInt(localStorage.getItem('tb_score')) || 0;
+        let energy = parseInt(localStorage.getItem('tb_energy')) || 1000;
+        
+        const scoreEl = document.getElementById('score');
+        const energyFill = document.getElementById('energy-fill');
+        const energyText = document.getElementById('energy-text');
+
+        scoreEl.innerText = score.toLocaleString();
+        updateEnergyUI();
+
+        document.getElementById('tiger-btn').addEventListener('click', (e) => {
+            if (energy > 0) {
+                score++;
+                energy--;
+                
+                scoreEl.innerText = score.toLocaleString();
+                updateEnergyUI();
+                
+                // ذخیره در حافظه گوشی
+                localStorage.setItem('tb_score', score);
+                localStorage.setItem('tb_energy', energy);
+
+                // لرزش گوشی (Haptic Feedback)
+                tg.HapticFeedback.impactOccurred('medium');
+            } else {
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+        });
+
+        // سیستم بازسازی انرژی (هر ۳ ثانیه ۱ انرژی)
+        setInterval(() => {
+            if (energy < 1000) {
+                energy++;
+                updateEnergyUI();
+                localStorage.setItem('tb_energy', energy);
+            }
+        }, 3000);
+
+        function updateEnergyUI() {
+            energyText.innerText = energy;
+            energyFill.style.width = (energy / 10) + "%";
+        }
+    </script>
+</body>
+</html>
