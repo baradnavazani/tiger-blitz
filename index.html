@@ -3,30 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tiger Blitz v2.5</title>
+    <title>Tiger Blitz Online</title>
     <script src="https://webappcontent.telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --primary: #ff9800; --bg: #0a0a0a; --card: #151515; }
         body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
-        
         nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: #111; display: flex; border-top: 1px solid #222; z-index: 9999; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #555; cursor: pointer; }
         .nav-item.active { color: var(--primary); }
         .nav-item b { font-size: 22px; margin-bottom: 3px; font-style: normal; }
-
         .page { display: none; height: calc(100vh - 75px); width: 100%; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; overflow-y: auto; position: absolute; top: 0; }
         .page.active { display: flex; }
-
         #score { font-size: 50px; font-weight: bold; color: var(--primary); margin: 15px 0; }
         .tiger-coin { width: 250px; height: 250px; border-radius: 50%; border: 8px solid #222; overflow: hidden; box-shadow: 0 0 30px rgba(255,152,0,0.2); transition: transform 0.05s; margin-top: 20px; }
         .tiger-coin:active { transform: scale(0.95); }
-        .tiger-coin img { width: 100%; height: 100%; object-fit: cover; }
-
-        .card { width: 100%; background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; box-sizing: border-box; }
-        .btn { background: var(--primary); color: black; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-        
-        .section-title { width: 100%; margin: 15px 0 10px; border-bottom: 1px solid #333; padding-bottom: 5px; color: var(--primary); font-weight: bold; }
+        .tiger-coin img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -34,7 +25,7 @@
     <div id="game-page" class="page active">
         <div style="color:#888;">BALANCE</div>
         <div id="score-val">0</div>
-        <div class="tiger-coin" onclick="tap()">
+        <div class="tiger-coin" onclick="handleTap()">
             <img src="tiger.png" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
         </div>
         <div style="margin-top:auto; width:100%; text-align:center;">
@@ -45,151 +36,76 @@
         </div>
     </div>
 
-    <div id="boost-page" class="page">
-        <div class="section-title">BOOSTERS</div>
-        <div class="card">
-            <div><b>Multitap (2X)</b><br><small id="m-timer">1 hour of 2x coins</small></div>
-            <button class="btn" id="m-btn" onclick="activateMulti()">Activate</button>
-        </div>
-
-        <div class="section-title">TASKS</div>
-        <div class="card">
-            <div><b>Invite 5 Friends</b><br><small id="task1-count">0 / 5 Invited</small></div>
-            <button class="btn" id="task1-btn" onclick="claimTask(1, 5, 5000)" disabled>Claim 5K</button>
-        </div>
-        <div class="card">
-            <div><b>Invite 10 Friends</b><br><small id="task2-count">0 / 10 Invited</small></div>
-            <button class="btn" id="task2-btn" onclick="claimTask(2, 10, 15000)" disabled>Claim 15K</button>
-        </div>
-    </div>
-
-    <div id="ref-page" class="page">
-        <h2>Invite Friends</h2>
-        <div class="card" style="background:rgba(255,152,0,0.1); border-color:var(--primary);">
-            <div style="text-align:left;">
-                <b style="color:var(--primary);">Bonus Reward!</b><br>
-                <small>Get +2,000 coins for every friend you invite!</small>
-            </div>
-        </div>
-        <div class="card" style="flex-direction:column; gap:10px;">
-            <div id="my-link" style="background:#000; padding:10px; width:100%; border-radius:8px; font-size:11px; word-break:break-all; color:var(--primary);">https://t.me/your_bot?start=user123</div>
-            <button class="btn" style="width:100%" onclick="copyRef()">Copy Referral Link</button>
-        </div>
-        <p style="color:#888">Total Referrals: <span id="total-refs" style="color:white; font-weight:bold;">0</span></p>
-        <div id="ref-bonus-msg" style="font-size:12px; color:#4CAF50;"></div>
-    </div>
-
-    <div id="wallet-page" class="page">
-        <div style="font-size:60px; margin-top:40px;">💎</div>
-        <h2>Wallet</h2>
-        <div id="wallet-status" style="color:#888; margin-bottom:20px;">Not Connected</div>
-        <button class="btn" style="width:80%;" id="connect-btn" onclick="connectWallet()">Connect Tonkeeper</button>
-    </div>
-
     <nav>
         <div class="nav-item active" onclick="nav('game-page', this)"><b>🎮</b>Game</div>
-        <div class="nav-item" onclick="nav('boost-page', this)"><b>🚀</b>Boost</div>
-        <div class="nav-item" onclick="nav('ref-page', this)"><b>👥</b>Invite</div>
-        <div class="nav-item" onclick="nav('wallet-page', this)"><b>💎</b>Wallet</div>
+        <div class="nav-item"><b>🚀</b>Boost</div>
+        <div class="nav-item"><b>👥</b>Invite</div>
+        <div class="nav-item"><b>💎</b>Wallet</div>
     </nav>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // --- اینجا تنظیمات خودت رو کپی کن ---
+        const firebaseConfig = {
+          apiKey: "<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAxCBS4uVJ_61fM_LBjIGlWY8MEZ0Itp4A",
+    authDomain: "tiger-blitz.firebaseapp.com",
+    projectId: "tiger-blitz",
+    storageBucket: "tiger-blitz.firebasestorage.app",
+    messagingSenderId: "955326126487",
+    appId: "1:955326126487:web:5064f7819e5523b1f4ccd2"
+  };",
+          authDomain: "...",
+          databaseURL: "...",
+          projectId: "...",
+          storageBucket: "...",
+          messagingSenderId: "...",
+          appId: "..."
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
 
-        let coins = parseInt(localStorage.getItem('tiger_score')) || 0;
-        let energy = 1000;
-        let power = 1;
-        let referrals = parseInt(localStorage.getItem('tiger_refs')) || 0;
-        let claimedTasks = JSON.parse(localStorage.getItem('tiger_tasks')) || [];
+        const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "test_user";
+        const userRef = ref(db, 'users/' + userId);
 
-        function updateUI() {
-            document.getElementById('score-val').innerText = coins.toLocaleString();
-            document.getElementById('energy-stat').innerText = energy + "/1000";
-            document.getElementById('fill').style.width = (energy / 10) + "%";
-            document.getElementById('total-refs').innerText = referrals;
-            
-            // Check milestones
-            checkTask(1, 5, 'task1');
-            checkTask(2, 10, 'task2');
-        }
+        let localData = { coins: 0, energy: 1000 };
 
-        // --- مژده: سیستم پاداش رفرال ---
-        function addReferral() {
-            referrals++;
-            coins += 2000; // هر نفر ۲۰۰۰ سکه
-            localStorage.setItem('tiger_refs', referrals);
-            save();
-            updateUI();
-            tg.showAlert("New friend joined! You got +2,000 Tiger Coins! 🐯");
-        }
+        onValue(userRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                localData = data;
+                document.getElementById('score-val').innerText = localData.coins.toLocaleString();
+                document.getElementById('energy-stat').innerText = localData.energy + "/1000";
+                document.getElementById('fill').style.width = (localData.energy / 10) + "%";
+            } else {
+                set(userRef, localData);
+            }
+        });
 
-        function checkTask(id, goal, elementPrefix) {
-            const btn = document.getElementById(elementPrefix + '-btn');
-            const count = document.getElementById(elementPrefix + '-count');
-            if(count) count.innerText = ${referrals} / ${goal} Invited;
-            if (claimedTasks.includes(id)) {
-                btn.innerText = "Claimed ✓"; btn.disabled = true;
-            } else if (referrals >= goal) { btn.disabled = false; }
-        }
-
-        function tap() {
-            if (energy >= power) {
-                coins += power; energy -= power;
-                save(); updateUI();
+        window.handleTap = function() {
+            if (localData.energy > 0) {
+                runTransaction(userRef, (dbData) => {
+                    if (dbData) {
+                        dbData.coins++;
+                        dbData.energy--;
+                    }
+                    return dbData;
+                });
                 tg.HapticFeedback.impactOccurred('medium');
             }
         }
-
-        function activateMulti() {
-            const lastUsed = localStorage.getItem('last_multi');
-            if (lastUsed && Date.now() - lastUsed < 3600000) {
-                tg.showAlert("One boost per hour allowed!"); return;
-            }
-            power = 2;
-            localStorage.setItem('last_multi', Date.now());
-            document.getElementById('m-btn').disabled = true;
-            tg.showAlert("2X Power Active for 1 hour!");
-            setTimeout(() => { power = 1; document.getElementById('m-btn').disabled = false; }, 3600000);
-        }
-
-        function claimTask(id, goal, reward) {
-            if (referrals >= goal && !claimedTasks.includes(id)) {
-                coins += reward;
-                claimedTasks.push(id);
-                localStorage.setItem('tiger_tasks', JSON.stringify(claimedTasks));
-                save(); updateUI();
-                tg.showAlert(Bonus ${reward} Claimed!);
-            }
-        }
-
-        function connectWallet() {
-            tg.showConfirm("Connect Tonkeeper?", (res) => {
-                if(res) {
-                    document.getElementById('wallet-status').innerText = "Connected";
-                    document.getElementById('connect-btn').innerText = "UQ...xY4";
-                    tg.showAlert("Wallet Linked!");
-                }
-            });
-        }
-
-        function nav(pageId, el) {
-            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(pageId).style.display = 'flex';
-            el.classList.add('active');
-        }
-
-        function save() { localStorage.setItem('tiger_score', coins); }
-        function copyRef() { 
-            // برای تست: اینجا یک رفرال مجازی اضافه میکنیم تا ببینی سکه میده یا نه
-            tg.showConfirm("Test: Simulate one referral (Get 2000 coins)?", (ok) => {
-                if(ok) addReferral();
-            });
-        }
-
-        setInterval(() => { if(energy < 1000) { energy++; updateUI(); } }, 1500);
-        window.onload = updateUI;
     </script>
 </body>
 </html>
