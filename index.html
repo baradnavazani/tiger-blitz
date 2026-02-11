@@ -1,71 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tiger Blitz</title>
+    <title>Tiger Blitz Pro</title>
     <script src="https://webappcontent.telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { margin: 0; background: #0a0a0a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        #score { font-size: 50px; font-weight: bold; color: #ff9800; margin-bottom: 20px; }
-        .tiger-btn { width: 250px; height: 250px; border-radius: 50%; border: 6px solid #222; overflow: hidden; box-shadow: 0 0 30px rgba(255,152,0,0.3); transition: transform 0.1s; cursor: pointer; }
-        .tiger-btn:active { transform: scale(0.95); }
-        .tiger-btn img { width: 100%; height: 100%; object-fit: cover; }
-        .energy-bar { width: 80%; height: 12px; background: #222; border-radius: 6px; margin-top: 40px; }
-        #fill { height: 100%; background: #ff9800; width: 100%; border-radius: 6px; transition: width 0.2s; }
-        /* لودینگ را مخفی پیش‌فرض می‌کنیم */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; display: none; align-items: center; justify-content: center; z-index: 1000; }
+        :root { --primary: #ff9800; --bg: #0a0a0a; --card: #151515; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        
+        /* Navigation */
+        nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #111; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #222; z-index: 100; }
+        .nav-item { color: #555; font-size: 11px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); transform: translateY(-3px); }
+
+        /* Pages */
+        .page { display: none; height: calc(100vh - 70px); flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .page.active { display: flex; }
+
+        /* Game Elements */
+        #score { font-size: 50px; font-weight: bold; color: var(--primary); margin: 10px 0; }
+        .tiger-container { width: 280px; height: 280px; margin: 30px 0; position: relative; }
+        .tiger-btn { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+        .tiger-btn:active { transform: scale(0.92); }
+        .tiger-btn img { width: 100%; height: 100%; object-fit: contain; } /* رفع مشکل کادر اضافه */
+
+        .energy-box { width: 90%; background: var(--card); padding: 15px; border-radius: 15px; margin-top: auto; margin-bottom: 10px; }
+        .bar { height: 12px; background: #222; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+        #fill { height: 100%; background: var(--primary); width: 100%; transition: width 0.2s; }
+
+        /* Lists */
+        .list-item { width: 100%; background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <div style="border: 4px solid #333; border-top-color: #ff9800; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+    <div id="game-page" class="page active">
+        <div style="color:#888;">TOTAL BALANCE</div>
+        <div id="score">0</div>
+        <div class="tiger-container">
+            <div class="tiger-btn" onclick="tap()">
+                <img src="tiger.png" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
+            </div>
+        </div>
+        <div class="energy-box">
+            <div style="display:flex; justify-content:space-between; font-size:13px;">
+                <span>⚡ Energy</span>
+                <span id="energy-stat">1000 / 1000</span>
+            </div>
+            <div class="bar"><div id="fill"></div></div>
+        </div>
     </div>
 
-    <div style="color: #888; font-size: 12px;">TOTAL BALANCE</div>
-    <div id="score">0</div>
-
-    <div class="tiger-btn" onclick="tap()">
-        <img src="tiger.png" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
+    <div id="boost-page" class="page">
+        <h2>Boosters</h2>
+        <div class="list-item"><span>Multi-Tap</span><button onclick="alert('Coming Soon')">Level 1</button></div>
+        <div class="list-item"><span>Energy Limit</span><button onclick="alert('Coming Soon')">Level 1</button></div>
     </div>
 
-    <div class="energy-bar"><div id="fill"></div></div>
-    <div id="status" style="margin-top: 10px; font-size: 14px;">1000 / 1000</div>
+    <div id="leaders-page" class="page">
+        <h2>Leaderboard</h2>
+        <div class="list-item"><span>1. Player One</span><span>1,200,000</span></div>
+        <div class="list-item"><span>2. Tiger King</span><span>850,000</span></div>
+        <div class="list-item"><span>3. You</span><span id="user-rank">0</span></div>
+    </div>
+
+    <div id="wallet-page" class="page">
+        <div style="font-size: 60px; margin-top: 40px;">💎</div>
+        <h2>Wallet</h2>
+        <p style="color:#888; text-align:center;">Connect your TON wallet to withdraw your rewards.</p>
+        <div class="list-item" style="justify-content:center; background:#333;">Coming Soon...</div>
+    </div>
+
+    <nav>
+        <div class="nav-item active" onclick="showPage('game-page', this)">🎮<span>Game</span></div>
+        <div class="nav-item" onclick="showPage('boost-page', this)">🚀<span>Boost</span></div>
+        <div class="nav-item" onclick="showPage('leaders-page', this)">🏆<span>Top</span></div>
+        <div class="nav-item" onclick="showPage('wallet-page', this)">💎<span>Wallet</span></div>
+    </nav>
 
     <script>
-        // خطایابی دستی: اگر تلگرام لود نشد، بازی کرش نکند
-        let tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-        
-        if(tg) {
-            tg.ready();
-            tg.expand();
-        }
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-        let coins = parseInt(localStorage.getItem('t_c')) || 0;
-        let nrg = 1000;
+        let score = parseInt(localStorage.getItem('t_c')) || 0;
+        let energy = 1000;
 
         function update() {
-            document.getElementById('score').innerText = coins.toLocaleString();
-            document.getElementById('fill').style.width = (nrg / 10) + '%';
-            document.getElementById('status').innerText = nrg + " / 1000";
+            document.getElementById('score').innerText = score.toLocaleString();
+            document.getElementById('user-rank').innerText = score.toLocaleString();
+            document.getElementById('energy-stat').innerText = ${energy} / 1000;
+            document.getElementById('fill').style.width = (energy / 10) + '%';
         }
 
         function tap() {
-            if (nrg > 0) {
-                coins++;
-                nrg--;
-                localStorage.setItem('t_c', coins);
+            if (energy > 0) {
+                score++;
+                energy--;
+                localStorage.setItem('t_c', score);
                 update();
-                if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                tg.HapticFeedback.impactOccurred('medium');
             }
         }
 
-        setInterval(() => { if(nrg < 1000) { nrg++; update(); } }, 1500);
-        
-        // اجرای بدون وقفه
+        function showPage(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        setInterval(() => { if (energy < 1000) { energy++; update(); } }, 1500);
         window.onload = update;
     </script>
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 </body>
 </html>
