@@ -1,129 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tiger Blitz</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://webappcontent.telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --primary: #ff9800; --bg: #0a0a0a; }
-        body { margin: 0; background-color: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
-        
-        /* استایل صفحه لودینگ */
-        #loading { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: var(--bg); display:flex; flex-direction:column; 
-            align-items:center; justify-content:center; z-index:9999; 
-        }
-        .spinner { 
-            border: 4px solid #333; border-top: 4px solid var(--primary); 
-            border-radius: 50%; width: 50px; height: 50px; 
-            animation: spin 1s linear infinite; 
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* استایل اصلی بازی */
-        #game-content { display: flex; flex-direction: column; align-items: center; padding: 20px; height: 100vh; }
-        #score { font-size: 50px; font-weight: bold; color: var(--primary); margin: 20px 0; }
-        .tiger-btn { 
-            width: 260px; height: 260px; border-radius: 50%; 
-            border: 6px solid #222; overflow: hidden; 
-            box-shadow: 0 0 40px rgba(255,152,0,0.3); transition: transform 0.1s;
-        }
+        body { margin: 0; background: #0a0a0a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        #score { font-size: 50px; font-weight: bold; color: #ff9800; margin-bottom: 20px; }
+        .tiger-btn { width: 250px; height: 250px; border-radius: 50%; border: 6px solid #222; overflow: hidden; box-shadow: 0 0 30px rgba(255,152,0,0.3); transition: transform 0.1s; cursor: pointer; }
         .tiger-btn:active { transform: scale(0.95); }
         .tiger-btn img { width: 100%; height: 100%; object-fit: cover; }
-
-        .energy-box { width: 85%; margin-top: 30px; }
-        .bar-bg { width: 100%; height: 12px; background: #222; border-radius: 6px; margin-top: 8px; }
-        #bar-fill { height: 100%; background: var(--primary); border-radius: 6px; width: 100%; transition: width 0.2s; }
-        
-        nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #111; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #222; }
-        .nav-item { font-size: 12px; color: #555; display: flex; flex-direction: column; align-items: center; }
-        .nav-item.active { color: var(--primary); }
+        .energy-bar { width: 80%; height: 12px; background: #222; border-radius: 6px; margin-top: 40px; }
+        #fill { height: 100%; background: #ff9800; width: 100%; border-radius: 6px; transition: width 0.2s; }
+        /* لودینگ را مخفی پیش‌فرض می‌کنیم */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; display: none; align-items: center; justify-content: center; z-index: 1000; }
     </style>
 </head>
 <body>
 
-    <div id="loading">
-        <div class="spinner"></div>
-        <h2 style="color:var(--primary); margin-top:20px;">TIGER BLITZ</h2>
+    <div id="loader">
+        <div style="border: 4px solid #333; border-top-color: #ff9800; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
     </div>
 
-    <div id="game-content">
-        <div style="color:#888; margin-top:10px;">TOTAL BALANCE</div>
-        <div id="score">0</div>
+    <div style="color: #888; font-size: 12px;">TOTAL BALANCE</div>
+    <div id="score">0</div>
 
-        <div class="tiger-btn" onclick="tapTiger()">
-            <img src="tiger.png" alt="Tiger" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
-        </div>
-
-        <div class="energy-box">
-            <div style="display:flex; justify-content:space-between; font-size:14px;">
-                <span>⚡ Energy</span>
-                <span id="energy-text">1000/1000</span>
-            </div>
-            <div class="bar-bg"><div id="bar-fill"></div></div>
-        </div>
+    <div class="tiger-btn" onclick="tap()">
+        <img src="tiger.png" onerror="this.src='https://placehold.co/400x400/orange/white?text=TIGER'">
     </div>
 
-    <nav>
-        <div class="nav-item active">🎮<span>Game</span></div>
-        <div class="nav-item">🚀<span>Boost</span></div>
-        <div class="nav-item">🏆<span>Top</span></div>
-        <div class="nav-item">💎<span>Wallet</span></div>
-    </nav>
+    <div class="energy-bar"><div id="fill"></div></div>
+    <div id="status" style="margin-top: 10px; font-size: 14px;">1000 / 1000</div>
 
     <script>
-        const tg = window.Telegram.WebApp;
+        // خطایابی دستی: اگر تلگرام لود نشد، بازی کرش نکند
+        let tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
         
-        // تنظیمات اولیه تلگرام
-        tg.ready();
-        tg.expand();
-
-        let score = parseInt(localStorage.getItem('tiger_score')) || 0;
-        let energy = 1000;
-
-        function updateUI() {
-            document.getElementById('score').innerText = score.toLocaleString();
-            document.getElementById('energy-text').innerText = ${energy}/1000;
-            document.getElementById('bar-fill').style.width = (energy / 10) + '%';
+        if(tg) {
+            tg.ready();
+            tg.expand();
         }
 
-        function tapTiger() {
-            if (energy > 0) {
-                score++;
-                energy--;
-                updateUI();
-                localStorage.setItem('tiger_score', score);
-                tg.HapticFeedback.impactOccurred('medium');
+        let coins = parseInt(localStorage.getItem('t_c')) || 0;
+        let nrg = 1000;
+
+        function update() {
+            document.getElementById('score').innerText = coins.toLocaleString();
+            document.getElementById('fill').style.width = (nrg / 10) + '%';
+            document.getElementById('status').innerText = nrg + " / 1000";
+        }
+
+        function tap() {
+            if (nrg > 0) {
+                coins++;
+                nrg--;
+                localStorage.setItem('t_c', coins);
+                update();
+                if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             }
         }
 
-        // شارژ انرژی
-        setInterval(() => {
-            if (energy < 1000) {
-                energy++;
-                updateUI();
-            }
-        }, 1500);
-
-        // تابع حذف لودینگ
-        function hideLoading() {
-            const loader = document.getElementById('loading');
-            if (loader) {
-                loader.style.display = 'none';
-            }
-        }
-
-        // اجرای اولیه
-        window.onload = () => {
-            updateUI();
-            // لودینگ را بعد از ۱.۵ ثانیه به هر قیمتی حذف کن
-            setTimeout(hideLoading, 1500);
-        };
-
-        // ضامن اضطراری: اگر بعد از ۵ ثانیه لودینگ هنوز بود، حذفش کن
-        setTimeout(hideLoading, 5000);
+        setInterval(() => { if(nrg < 1000) { nrg++; update(); } }, 1500);
+        
+        // اجرای بدون وقفه
+        window.onload = update;
     </script>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 </body>
 </html>
